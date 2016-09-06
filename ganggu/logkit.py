@@ -25,6 +25,10 @@
 
 使用 `Logger(name)` 代替标准库的 `getLogger(name)`。可以使用方便的
 `emergency()`、`alert()`、`notice()`、`verbose()` 和 `spam()` 方法。
+
+依赖：
+
+  * [coloredlogs](https://coloredlogs.readthedocs.io/en/latest/)
 """
 
 import logging

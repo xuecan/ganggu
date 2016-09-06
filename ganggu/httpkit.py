@@ -26,6 +26,10 @@ Requests 库依赖标准库 [http.client.HTTPConnection][]，其中包含了 `de
 ----
 
 Working for Requests 2.11.1 and Python 3.5.0 .
+
+依赖：
+
+  * [requests](http://docs.python-requests.org/en/master/)
 """
 
 import http.client
