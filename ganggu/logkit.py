@@ -39,8 +39,7 @@ __version__ = '1.0.0'
 
 DEFAULTS = {
     # coloredlogs default:
-    # %(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s
-    'LOG-FORMAT': '%(asctime)s %(levelname)s %(message)s',
+    'LOG-FORMAT': '%(asctime)s %(name)s[%(process)d] %(levelname)s %(message)s',
     # 日期格式
     'DATE-FORMAT': '%Y-%m-%d %H:%M:%S',
     # 字段样式
@@ -111,7 +110,7 @@ class Logger(logging.Logger):
         self.log(logging.EMERGENCY, *args, **kwargs)
 
 
-def setup_console_logger(level='debug'):
+def setup_console_logger(level='DEBUG'):
     """设置在终端输出的日志"""
     settings = {
         'fmt':          DEFAULTS['LOG-FORMAT'],
@@ -122,7 +121,7 @@ def setup_console_logger(level='debug'):
     coloredlogs.install(level, **settings)
 
 
-def setup_logger(logger, level, filename):
+def setup_logger(level, filename, logger=None):
     """设置保存在文件系统的日志"""
     level = level.upper()
     try:
@@ -135,6 +134,8 @@ def setup_logger(logger, level, filename):
             httpkit.set_debug_level(0)
     except ImportError:
         pass
+    if not logger:
+        logger = Logger('root')
     logger.setLevel(level)
     logger.propagate = True
     setup_console_logger(level)
