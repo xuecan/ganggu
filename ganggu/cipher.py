@@ -31,7 +31,6 @@ def aes_encrypt(data, key, iv):
 def aes_decrypt(data, key, iv):
     encryptor = AES.new(key, AES.MODE_CBC, iv)
     data = encryptor.decrypt(data)
-    print(data)
     data = pkcs5_unpad(data)
     return data
 
