@@ -10,10 +10,15 @@
 * Flask
 """
 
+__all__ = ['render_template', 'url_for', 'jsonify', 'urlize',
+           'redirect', 'js_redirect', 'abort', 'json_abort',
+           'JsonAbort', 'register_json_abort_handler']
+
 import urllib
-from flask import render_template, url_for
+from flask import render_template, url_for, abort, jsonify, redirect
 from werkzeug.wrappers import BaseResponse
 from werkzeug.utils import escape
+from werkzeug.http import HTTP_STATUS_CODES
 
 
 def js_redirect(location, template=None):
@@ -45,3 +50,31 @@ def urlize(key, value, encoding='utf8'):
     if isinstance(value, unicode):
         value = value.encode(encoding)
     return urllib.urlencode({key: value})
+
+
+class JsonAbort(Exception):
+
+    def __init__(self, status_code=200, message=None, payload=None):
+        if not message:
+            message = HTTP_STATUS_CODES[status_code]
+        Exception.__init__(self, '%d %s' % (status_code, message))
+        self.status_code = status_code
+        self.message = message
+        self.payload = payload or dict()
+
+    def to_dict(self):
+        return self.payload
+
+
+def _handle_json_abort(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
+
+
+def register_json_abort_handler(app):
+    app.register_error_handler(JsonAbort, _handle_json_abort)
+
+
+def json_abort(status_code=200, message=None, payload=None):
+    raise JsonAbort(status_code, message, payload)
