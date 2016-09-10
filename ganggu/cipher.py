@@ -2,7 +2,12 @@
 # Copyright (C) 2013-2016 Xue Can <xuecan@gmail.com> and contributors.
 # Licensed under the MIT license: http://opensource.org/licenses/mit-license
 
+import hmac
 from Crypto.Cipher import AES, DES3
+
+
+def hmac_digest(data, key, method='sha256'):
+    return hmac.new(key, data, method).hexdigest()
 
 
 def pkcs5_pad(data, block_size):
