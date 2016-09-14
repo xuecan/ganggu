@@ -32,13 +32,23 @@ class NOTNULL:
 
 class Schema(object):
 
-    def __init__(self, metadata=None):
+    def __init__(self, metadata=None, **kwargs):
+        """
+        **kwargs 将会传递到 Table 的构造方法中。
+        """
         self.metadata = metadata or MetaData()
+        self.table_default_kw = kwargs
+    
+    def _get_table_default_kw(self):
+        result = dict()
+        for k in self.table_default_kw:
+            result[k] = self.table_default_kw[k]
+        return result
 
     def _build_table(self, tablename, items):
         """构建表对象"""
         args = list()
-        kwargs = dict()
+        kwargs = self._get_table_default_kw()
         # 读取表的定义
         for item in items:
             if isinstance(item, dict):
@@ -126,9 +136,9 @@ def pkeys(*columns):
     return {"type": "primary", "columns": columns}
 
 
-def fkey(table, col_name="id", type_=None, onupdate='CASCADE', ondelete='RESTRICT', primary_key=False):
+def fkey(table, col_name='', type_=None, onupdate='CASCADE', ondelete='RESTRICT', primary_key=False):
     """构建外键列"""
-    name = "%s_%s" % (table, col_name)
+    name = col_name or "%s_id" % table
     foreign = "%s.%s" % (table, col_name)
     if type_ is None:
         type_ = INTEGER
@@ -136,6 +146,10 @@ def fkey(table, col_name="id", type_=None, onupdate='CASCADE', ondelete='RESTRIC
                   ForeignKey(foreign, onupdate=onupdate, ondelete=ondelete),
                   primary_key=primary_key,
                   nullable=False)
+
+
+def fkeys(*args, **kwargs):
+    return ForeignKeyConstraint(*args, **kwargs)
 
 
 def idx(*columns):
