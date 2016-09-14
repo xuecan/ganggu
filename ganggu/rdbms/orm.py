@@ -24,6 +24,10 @@ class Database(object):
             raise RuntimeError('engine not bound')
         return self._session
 
+    @property
+    def connection(self):
+        return self.session.connection()
+
     def bind(self, engine):
         if self._engine:
             raise RuntimeError('engine has been bound')

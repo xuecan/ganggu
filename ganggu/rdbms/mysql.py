@@ -8,6 +8,7 @@
 Requirement:
 
 * SQLAlchemy
+* PyMySQL
 """
 
 __all__ = [
@@ -17,9 +18,8 @@ __all__ = [
 
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.mysql import INTEGER
-from ._schema import Schema, col, pkeys, idx, uniq, NULL, NOTNULL
-from ._schema import pkey as _pkey
-from ._schema import fkey as _fkey
+from .schema import Schema, col, pkeys, fkeys, idx, uniq, NULL, NOTNULL
+from .schema import pkey as _pkey, fkey as _fkey
 
 
 def make_engine(uri, debug=False):
