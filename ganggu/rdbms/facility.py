@@ -2,17 +2,24 @@
 # Copyright (C) 2014-2016 Xue Can <xuecan@gmail.com> and contributors.
 # Licensed under the MIT license: http://opensource.org/licenses/mit-license
 
-"""与 SQLAlchemy ORM 的会话相关的工具"""
+"""
+# 数据库连接装置
+
+这个模块提供了 Facility 类，用于关联 SQLAlchemy 的数据库引擎对象 Engine 和数据库会话
+Session 对象。
+"""
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 
-class Database(object):
+class Facility(object):
 
-    def __init__(self):
+    def __init__(self, engine=None):
         self._engine = None
         self._sessionmaker = sessionmaker()
         self._session = scoped_session(self._sessionmaker)
+        if engine:
+            self.bind(engine)
 
     @property
     def engine(self):
@@ -46,21 +53,21 @@ class Database(object):
             self.session.remove()
 
 
-class Databases(object):
+class Facilities(object):
 
     def __init__(self):
         self._names = set()
 
     def __setattr__(self, name, value):
-        if isinstance(value, Database):
+        if isinstance(value, Facility):
             self._names.add(name)
         object.__setattr__(self, name, value)
 
     def get_all(self):
         data = dict()
         for name in self._names:
-            database = getattr(self, name)
-            data[name] = database
+            facility = getattr(self, name)
+            data[name] = facility
         return data
 
     def remove_sessions(self, exception=None):
@@ -72,5 +79,5 @@ class Databases(object):
         http://flask.pocoo.org/docs/0.10/reqcontext/#teardown-callbacks
         """
         for name in self._names:
-            database = getattr(self, name)
-            database.remove_session()
+            facility = getattr(self, name)
+            facility.remove_session()
