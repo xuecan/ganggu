@@ -7,15 +7,13 @@
 """
 
 
-__all__ = ["table", "col", "pkey", "pkeys", "fkey", "idx", "uniq",
-           "NULL", "NOTNULL",
-           'Database']
+__all__ = ['Schema', 'col', 'pkey', 'fkey', 'idx', 'uniq',
+           'NULL', 'NOTNULL', 'PRIMARY', 'FOREIGN']
 
 
-from sqlalchemy import \
-    MetaData, Table, Column, \
-    PrimaryKeyConstraint, ForeignKey, Index, UniqueConstraint, \
-    INTEGER
+from sqlalchemy import MetaData, Table, Column, \
+    PrimaryKeyConstraint, ForeignKeyConstraint, ForeignKey, \
+    Index, UniqueConstraint
 
 
 # =====================================================================
@@ -23,11 +21,22 @@ from sqlalchemy import \
 # =====================================================================
 
 class NULL:
-    """nullable = True"""
+    """nullable=True"""
 
 
 class NOTNULL:
-    """nullable = False"""
+    """nullable=False"""
+
+
+class PRIMARY:
+    """primary_key=True"""
+
+
+def FOREIGN(refname, **kwargs):
+    """构建用于 Column 参数的外键描述"""
+    kwargs.setdefault('onupdate', 'CASCADE')
+    kwargs.setdefault('ondelete', 'RESTRICT')
+    return ForeignKey(refname, **kwargs)
 
 
 class Schema(object):
@@ -47,6 +56,9 @@ class Schema(object):
 
     def _build_table(self, tablename, items):
         """构建表对象"""
+        indx_count = 0
+        uniq_count = 0
+        fkey_count = 0
         args = list()
         kwargs = self._get_table_default_kw()
         # 读取表的定义
@@ -55,16 +67,20 @@ class Schema(object):
                 type_ = item["type"]
                 if type_ == "index":
                     columns = item["columns"]
-                    name = "idx_%s__%s" % (tablename, "__".join(columns))
+                    name = item['name']
+                    if not name:
+                        indx_count += 1
+                        name = 'idx_%s_%d' % (tablename, indx_count)
+                        #name = "idx_%s__%s" % (tablename, "__".join(columns))
                     item = Index(name, *columns)
                 elif type_ == "unique":
                     columns = item["columns"]
-                    name = "uniq_%s__%s" % (tablename, "__".join(columns))
+                    name = item['name']
+                    if not name:
+                        uniq_count += 1
+                        name = 'uniq_%s_%d' % (tablename, uniq_count)
+                        #name = "uniq_%s__%s" % (tablename, "__".join(columns))
                     item = UniqueConstraint(*columns, name=name)
-                elif type_ == "primary":
-                    columns = item["columns"]
-                    name = "pkey_%s__%s" % (tablename, "__".join(columns))
-                    item = PrimaryKeyConstraint(*columns, name=name)
                 else:
                     raise ValueError("unsupported schema item")
                 args.append(item)
@@ -85,8 +101,8 @@ class Schema(object):
             def user():
                 return [...]
 
-            @table('metadata')
-            def table_netadata():
+            @table('def')
+            def table_def():
                 return [...]
         """
         if isinstance(func, str):
@@ -97,8 +113,8 @@ class Schema(object):
                 def inner():
                     items = func()
                     return self._build_table(tablename, items)
-                return inner
-            return outter()
+                return inner()
+            return outter
         else:
             # 以 @table 的形式修饰
             # 等价于 func = table(func)
@@ -120,43 +136,29 @@ def col(*args, **kwargs):
     if NULL in args:
         args.remove(NULL)
         kwargs["nullable"] = True
+    if PRIMARY in args:
+        args.remove(PRIMARY)
+        kwargs['primary_key'] = True
     return Column(*args, **kwargs)
 
 
-def pkey(name="id", type_=None, **kwargs):
-    """构建主键列"""
-    if type_ is None:
-        type_ = INTEGER
-        kwargs.setdefault('autoincrement', True)
-    return Column(name, type_, nullable=False, primary_key=True, **kwargs)
-
-
-def pkeys(*columns):
+def pkey(*args, **kwargs):
     """返回用于将多个列构建为主键的信息"""
-    return {"type": "primary", "columns": columns}
+    return PrimaryKeyConstraint(*args, **kwargs)
 
 
-def fkey(table, col_name='', type_=None, onupdate='CASCADE', ondelete='RESTRICT', primary_key=False):
-    """构建外键列"""
-    name = col_name or "%s_id" % table
-    foreign = "%s.%s" % (table, col_name)
-    if type_ is None:
-        type_ = INTEGER
-    return Column(name, type_,
-                  ForeignKey(foreign, onupdate=onupdate, ondelete=ondelete),
-                  primary_key=primary_key,
-                  nullable=False)
-
-
-def fkeys(*args, **kwargs):
+def fkey(*args, **kwargs):
     return ForeignKeyConstraint(*args, **kwargs)
 
 
-def idx(*columns):
+def idx(*columns, **kwargs):
     """返回让 table 构建普通索引的信息"""
-    return {"type": "index", "columns": columns}
+    name = kwargs.get('name', None)
+    return {'type': 'index', 'columns': columns, 'name': name}
 
 
-def uniq(*columns):
+def uniq(*columns, **kwargs):
     """返回让 table 构建唯一索引的信息"""
-    return {"type": "unique", "columns": columns}
+    name = kwargs.get('name', None)
+    return {'type': 'unique', 'columns': columns, 'name': name}
+
