@@ -20,16 +20,25 @@ SOCKET_TIMEOUT = 5.0
 
 
 def make_redis_store(uri):
-    """创建 Redis 客户端实例"""
+    """Create a redis instance.
+
+    redis[+legacy|+strict]://[:password@]host:port/db
+    """
     result = urlparse(uri)
-    if result.scheme!='redis':
+    scheme = result.scheme.lower()
+    if not result.scheme.startswith('redis'):
         raise ValueError('not a redis uri')
     host = result.hostname
     port = result.port
     database = int(result.path[1:])
     password = result.password or None
-    store = redis.StrictRedis(
+    if scheme == 'redis+legacy':
+        class_ = redis.Redis
+    else:
+        class_ = redis.StrictRedis
+    store = class_(
         host, port, database, password,
-        socket_timeout=SOCKET_TIMEOUT, socket_connect_timeout=None
+        socket_timeout=SOCKET_TIMEOUT,
+        socket_connect_timeout=SOCKET_CONNECT_TIMEOUT
     )
     return store
