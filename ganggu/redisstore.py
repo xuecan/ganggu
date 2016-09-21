@@ -10,7 +10,7 @@ Requirement:
 * redis
 """
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 import redis
 
 RedisError = redis.RedisError
@@ -31,7 +31,10 @@ def make_redis_store(uri):
     host = result.hostname
     port = result.port
     database = int(result.path[1:])
-    password = result.password or None
+    if result.password:
+        password = unquote(result.password)
+    else:
+        password = None
     if scheme == 'redis+legacy':
         class_ = redis.Redis
     else:
