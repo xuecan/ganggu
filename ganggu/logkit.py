@@ -33,6 +33,7 @@
 
 import logging
 import coloredlogs
+from logging import getLogger as get_logger
 
 __version__ = '1.0.0'
 
@@ -110,6 +111,9 @@ class Logger(logging.Logger):
         self.log(logging.EMERGENCY, *args, **kwargs)
 
 
+logging.setLoggerClass(Logger)
+
+
 def setup_console_logger(level='DEBUG'):
     """设置在终端输出的日志"""
     settings = {
@@ -135,7 +139,7 @@ def setup_logger(level, filename, logger=None):
     except ImportError:
         pass
     if not logger:
-        logger = Logger('root')
+        logger = logging.getLogger()
     logger.setLevel(level)
     logger.propagate = True
     setup_console_logger(level)
