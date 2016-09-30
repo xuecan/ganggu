@@ -21,10 +21,10 @@ from kombu.exceptions import OperationalError
 from .datastructures import Object
 
 
-def make_worker(name):
+def make_worker(name, set_as_current=True):
     """返回默认的 worker 实例，还需要进一步配置方可使用"""
     name = str(name)
-    worker = Celery(name)
+    worker = Celery(name, set_as_current=set_as_current)
     worker.conf.update(
         # names
         task_default_queue=name,
