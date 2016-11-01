@@ -32,6 +32,10 @@ class PRIMARY:
     """primary_key=True"""
 
 
+class AUTOINC:
+    """autoincrement=True"""
+
+
 def FOREIGN(refname, **kwargs):
     """构建用于 Column 参数的外键描述"""
     kwargs.setdefault('onupdate', 'CASCADE')
@@ -46,6 +50,8 @@ class Schema(object):
         **kwargs 将会传递到 Table 的构造方法中。
         """
         self.metadata = metadata or MetaData()
+        if 'schema' in kwargs and self.metadata.schema is None:
+            self.metadata.schema = kwargs['schema']
         self.table_default_kw = kwargs
     
     def _get_table_default_kw(self):
@@ -109,10 +115,13 @@ class Schema(object):
             # 以 @table('tablename') 的形式修饰
             # 等价于 func = table('tablename')(func)
             tablename = func
+            description = func.__doc__
             def outter(func):
                 def inner():
                     items = func()
-                    return self._build_table(tablename, items)
+                    table = self._build_table(tablename, items)
+                    table.__doc__ = description
+                    return table
                 return inner()
             return outter
         else:
@@ -120,8 +129,11 @@ class Schema(object):
             # 等价于 func = table(func)
             def wrapper():
                 tablename = func.__name__
+                description = func.__doc__
                 items = func()
-                return self._build_table(tablename, items)
+                table = self._build_table(tablename, items)
+                table.__doc__ = description
+                return table
             return wrapper()
 
 
@@ -139,6 +151,9 @@ def col(*args, **kwargs):
     if PRIMARY in args:
         args.remove(PRIMARY)
         kwargs['primary_key'] = True
+    if AUTOINC in args:
+        args.remove(AUTOINC)
+        kwargs['autoincrement'] = True
     return Column(*args, **kwargs)
 
 
