@@ -2,26 +2,32 @@
 # Copyright (C) 2012-2016 Xue Can <xuecan@gmail.com> and contributors.
 # Licensed under the MIT license: http://opensource.org/licenses/mit-license
 
+"""
+一些简单的数据结构
+==================
+
+本模块提供了几个简单的数据结构。
+"""
+
+__version__ = '1.0.0'
+
 
 class Object(object):
-    """简单对象"""
+    """简单对象。"""
 
     def __init__(self, **kwargs):
         for attr in kwargs:
-            if attr not in self.__dict__:
-                setattr(self, attr, kwargs[attr])
-            else:
-                raise KeyError('invalid attribute name "%s"' % attr)
+            setattr(self, attr, kwargs[attr])
 
 
-class singleton(type):
-    """用于实现 singleton 设计模式的 metaclass
+class Singleton(type):
+    """用于实现 Singleton 设计模式的 metaclass
 
-    需要运用 singleton 设计模式的类，只需要该类或其祖先设置类属性 __metaclass__
+    需要运用 Singleton 设计模式的类，只需要该类或其祖先设置类属性 __metaclass__
     为本类即可：
 
-        class A(object):
-            __metaclass__ = singleton
+        class A(object, metaclass=Singleton):
+            pass
 
         class B(A):
             pass
@@ -30,12 +36,12 @@ class singleton(type):
     """
 
     def __init__(cls, name, bases, dict):
-        super(singleton, cls).__init__(name, bases, dict)
+        super(Singleton, cls).__init__(name, bases, dict)
         cls.instance = None
 
-    def __call__(cls,*args,**kw):
+    def __call__(cls, *args, **kw):
         if cls.instance is None:
-            cls.instance = super(singleton, cls).__call__(*args, **kw)
+            cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
 
 
@@ -43,7 +49,7 @@ class DictObject(dict):
     """类似字典，可以按属性存取"""
 
     def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
+        super(DictObject, self).__init__(*args, **kwargs)
 
     def __getattr__(self, name):
         return self.get(name)
@@ -61,20 +67,41 @@ class DictObject(dict):
             dict.__delattr__(self, name)
 
 
-class Boundable:
-    """将自身绑定到另一个对象上"""
+class Bindable:
+    """将自身绑定到另一个对象上，这是一个 Mixin。"""
 
-    def _setup_boundable(self, bind_to, bind_at):
+    def setup_bindable(self, bind_to, bind_at):
+        """设置绑定属性名称。
+
+        Args:
+            bind_to (str): 本对象用于保存绑定目标的属性名。
+            bind_at (str): 绑定目标用于保存本对象的属性名。
+        """
+        check = lambda x: x not in ['_bind_to', '_bind_at', '']
+        bind_to = str(bind_to).strip()
+        bind_at = str(bind_at).strip()
+        if not check(bind_to) or not check(bind_at) or bind_to == bind_at:
+            raise ValueError('invalid bind_to and/or bind_at argument(s)')
         self.__dict__['_bind_to'] = bind_to
         self.__dict__['_bind_at'] = bind_at
         self.__dict__[bind_to] = None
 
     def bind(self, to_):
-        setattr(self, self._bind_to, to_)
-        setattr(to_, self._bind_at, self)
+        """将本对象绑定到目标对象上。
+
+        Args:
+            to_ (object): 绑定目标。
+        """
+        bind_to = self.__dict__['_bind_to']
+        if self.__dict__[bind_to]:
+            raise RuntimeError('this object already has a binding object')
+        self.__dict__[bind_to] = to_
+        setattr(to_, self.__dict__['_bind_at'], self)
 
     def unbind(self):
-        to_ = getattr(self, self._bind_to)
+        """解除本对象与目标对象的绑定。"""
+        bind_to = self.__dict__['_bind_to']
+        to_ = self.__dict__[bind_to]
         if to_:
-            delattr(to_, self._bind_at)
-            setattr(self, self._bind_to, None)
+            delattr(to_, self.__dict__['_bind_at'])
+            self.__dict__[bind_to] = None
