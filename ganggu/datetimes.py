@@ -81,6 +81,8 @@ ISO 8601 的处理，由于历史遗留问题，PHP 里声明为 ISO8601 的输�
 from datetime import datetime, timedelta, timezone, tzinfo
 import time
 
+__version__ = '1.0.0'
+
 __all__ = [
     'get_system_timezone', 'with_system_timezone',
     'get_default_timezone', 'set_default_timezone', 'with_default_timezone',
@@ -89,7 +91,6 @@ __all__ = [
     'format_as_rfc1123', 'format_as_rfc2822', 'format_as_rfc3339',
     'now', 'before', 'after', 'UTC'
 ]
-
 
 
 # UTC （协调世界时）时区
