@@ -31,6 +31,10 @@
 
 本模块提供了一系列 ``setup_*_handler()`` 函数用于快速设置日志处理器。
 
+注意：由于本模块对标准库中的 ``logging`` 进行了所谓的 monkey patch，因此\
+需要在应用程序尽可能早的位置导入本模块，目的是尽可能不要让其它的库首先调用
+``logging.getLogger()`` 函数，否则得到的 ``Logger`` 对象无法使用本模块提供的方法。
+
 本模块依赖如下第三方库：
 
 * `coloredlogs <https://coloredlogs.readthedocs.io/en/latest/>`_。
