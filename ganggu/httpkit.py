@@ -82,7 +82,8 @@ class Session(requests.Session):
 
         Args:
             method (str): Method for the request.
-            url (str): URL for the request.
+            url (str|callable): URL for the request. Or a callable should return
+                                the URL.
             params (bytes|dict): Dictionary or bytes to be sent in the query
                                  string for the request.
             data (bytes|dict|file): Dictionary, bytes, or file-like object to send
@@ -112,6 +113,8 @@ class Session(requests.Session):
         """
         if not timeout:
             timeout = TIMEOUT
+        if callable(url):
+            url = url()
         return super(Session, self).request(method, url, params, data, headers,
                                             cookies, files, auth, timeout,
                                             allow_redirects, proxies, hooks, stream,
@@ -123,7 +126,8 @@ def request(method, url, **kwargs):
 
     Args:
         method (str): Method for the request.
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         \*\*kwargs: Optional arguments that ``Session.request()`` takes.
 
     Returns:
@@ -140,7 +144,8 @@ def get(url, params=None, **kwargs):
     """Sends a GET request.
 
     Args:
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         params (bytes|dict): Dictionary or bytes to be sent in the query string
                              for the request.
         \*\*kwargs: Optional arguments that ``Session.request()`` takes.
@@ -156,7 +161,8 @@ def options(url, **kwargs):
     """Sends a OPTIONS request.
 
     Args:
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         \*\*kwargs: Optional arguments that ``Session.request()`` takes.
 
     Returns:
@@ -170,7 +176,8 @@ def head(url, **kwargs):
     """Sends a HEAD request.
 
     Args:
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         \*\*kwargs: Optional arguments that ``Session.request()`` takes.
 
     Returns:
@@ -184,7 +191,8 @@ def post(url, data=None, json=None, **kwargs):
     """Sends a POST request.
 
     Args:
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         data (bytes|dict|file): Dictionary, bytes, or file-like object to send in the body of
                                 the request.
         json (dict|list): JSON data to send in the body of the request.
@@ -200,7 +208,8 @@ def put(url, data=None, **kwargs):
     """Sends a PUT request.
 
     Args:
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         data (bytes|dict|file): Dictionary, bytes, or file-like object to send in the body of
                                 the request.
         \*\*kwargs: Optional arguments that ``Session.request()`` takes.
@@ -215,7 +224,8 @@ def patch(url, data=None, **kwargs):
     """Sends a PATCH request.
 
     Args:
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         data (bytes|dict|file): Dictionary, bytes, or file-like object to send in the body of
                                 the request.
         \*\*kwargs: Optional arguments that ``Session.request()`` takes.
@@ -230,7 +240,8 @@ def delete(url, **kwargs):
     """Sends a DELETE request.
 
     Args:
-        url (str): URL for the request.
+        url (str|callable): URL for the request. Or a callable should return
+                            the URL.
         \*\*kwargs: Optional arguments that ``Session.request()`` takes.
 
     Returns:
