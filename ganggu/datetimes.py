@@ -23,34 +23,25 @@
 当本模块的函数处理的日期时间对象不包含时区信息时，会将它当做系统使用时区的时间。
 
 而默认时区，是指本模块中与生成日期时间对象有关的函数默认使用的时区。本模块通常\
-不会生成不含时区信息的日期时间对象。默认时区被默认的设置为 UTC+8。使用
+不会生成不含时区信息的日期时间对象。默认时区被默认的设置为 Asia/Shanghai。使用
 ``set_default_timezone()`` 函数可以修改默认时区。
 
 
 关于时区的一些备忘
 ~~~~~~~~~~~~~~~~~~
 
-在 Python 中，要获得最完整准确的关于时区的支持，需要使用 `pytz`_ 库。然而，大多数时候\
-我们只需要一个明确的当前使用的时区，而不需要完整的时区知识。``pytz`` 提供给我们的\
-太多，以至于有时候增加了处理的复杂程度。仅以中国使用的时间为例，我们通常不在意 1940
-到 1941 年，以及 1986-1991 年以一些不同的规则启用了夏令时，也不在意 Asia/Shanghai
-(上海)或 Asia/Urumqi (乌鲁木齐)的平均日出时间(Local Mean Time, LMT)有何不同。所以，\
-我们并不需要一个压缩后仍有数百 KB 的库，仅用于日常处理当前时区的问题。
+在 Python 中，要获得最完整准确的关于时区的支持，需要使用 `pytz`_ 库。然而，对于
+Asia/Shanghai(上海)或 Asia/Urumqi (乌鲁木齐)这个库使用了平均日出时间(Local Mean Time,
+LMT)，因此对于 ``datetime.datetime`` 对象使用 ``replace()`` 方法得到的结果并不是我们\
+需要的，需要使用时区对象的 ``localize()`` 方法来将将不含时区信息的日期时间设置时区。
 
-通常，我们只需要使用 Python 标准库中 ``datetime.timezone`` 类来创建时区即可。其构造方法\
-接受可选的 ``name`` 参数作为时区的名称。目前，由于一些和日期时间有关的规范和惯例，要求\
-表示日期时间的字符串使用时区缩写(如 RFC850 以及关于设置 Cookie 的规范)。换句话说就是使用
-CST、EST 而不是 Asia/Shanghai、America/New_York 来表示时区。因此建议使用缩写作为时区的名称，\
-方便使用日期时间格式 ``%Z`` 来生成符合规范的信息。
-
-然而，程序员需要知道，时区缩写常常不具有唯一性，例如 CST 就可能用于表示：
+``pytz`` 能够很好的处理日期时间的格式化字符串，例如使用 ``%Z`` 可以得到类似 CST、EST
+这样的信息而不是 Asia/Shanghai、America/New_York。然而，程序员需要知道，时区缩写常常\
+不具有唯一性，例如 CST 就可能用于表示：
 
 * 中国标准时间(China Standard Time)，UTC +8
 * (北美的)中部标准时间(Central Standard Time), UTC -6
 * 古巴标准时间(Cuba Standard Time)，UTC -5
-
-当然，当需要完整的时区支持时，`pytz`_ 仍是首选。而只需要简单的时区处理时，使用标准库的
-``datetime.timezone`` 类并使用时区缩写就足够了。
 
 .. _pytz: https://pypi.python.org/pypi/pytz/
 
@@ -77,10 +68,12 @@ ISO 8601 的处理，由于历史遗留问题，PHP 里声明为 ISO8601 的输�
 
 """
 
-from datetime import datetime, timedelta, timezone, tzinfo
-import time
+from datetime import datetime, timedelta, tzinfo
+import pytz
+import tzlocal
 
-__version__ = '1.0.0'
+
+__version__ = '2.0.0'
 
 __all__ = [
     'get_system_timezone', 'with_system_timezone',
@@ -93,7 +86,7 @@ __all__ = [
 
 
 # UTC （协调世界时）时区
-UTC = timezone(timedelta(seconds=0), 'UTC')
+UTC = pytz.UTC
 
 
 def get_system_timezone():
@@ -102,22 +95,11 @@ def get_system_timezone():
     Returns:
         datetime.tzinfo: 设备当前使用的时区。
     """
-    names = time.tzname
-    if time.daylight:
-        # 当前是夏令时
-        seconds = time.altzone
-        name = names[1]
-    else:
-        # 非夏令时
-        seconds = time.timezone
-        name = names[0]
-    # time.timezone 以及 time.altzone 西半球是正数，和时区的规定正好相反
-    seconds = - seconds
-    return timezone(timedelta(seconds=seconds), name)
+    return tzlocal.get_localzone()
 
 
 # 这个模块的一些用于生成日期时间的函数共用如下的默认时区设置。
-_DEFAULT_TIMEZONE = timezone(timedelta(hours=8), 'CST')
+_DEFAULT_TIMEZONE = pytz.timezone("Asia/Shanghai")
 
 
 def get_default_timezone():
@@ -153,7 +135,7 @@ def with_system_timezone(moment):
     """
     tzinfo = get_system_timezone()
     if moment.tzinfo is None:
-        moment = moment.replace(tzinfo=tzinfo)
+        moment = tzinfo.localize(moment)
     else:
         moment = moment.astimezone(tzinfo)
     return moment
@@ -172,7 +154,7 @@ def with_default_timezone(moment):
     """
     tzinfo = get_default_timezone()
     if moment.tzinfo is None:
-        moment = moment.replace(tzinfo=tzinfo)
+        moment = tzinfo.localize(moment)
     else:
         moment = moment.astimezone(tzinfo)
     return moment
