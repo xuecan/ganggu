@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# Copyright (C) 2012-2016 Xue Can <xuecan@gmail.com> and contributors.
+# Copyright (C) 2012-2017 Xue Can <xuecan@gmail.com> and contributors.
 # Licensed under the MIT license: http://opensource.org/licenses/mit-license
 
 """
@@ -12,7 +12,6 @@
 +-----------+-------+-----------------------------------+
 | Level     | Value | Defined                           |
 +-----------+-------+-----------------------------------+
-| NOTHING   |  9999 | n/a                               |
 | EMERGENCY |    70 | RFC 5424                          |
 | ALERT     |    60 | RFC 5424                          |
 | CRITICAL  |    50 | RFC 5424, Python Standard Library |
@@ -46,7 +45,7 @@ from logging import StreamHandler
 from logging.handlers import WatchedFileHandler
 from coloredlogs import ColoredFormatter
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 
 # 一些默认值
@@ -98,10 +97,6 @@ logging.ALERT = 60
 logging.addLevelName(70, 'EMERGENCY')
 logging.EMERGENCY = 70
 
-# 一个特殊的实际上不显示日志的等级
-logging.addLevelName(9999, 'NOTHING')
-logging.NOTHING = 9999
-
 
 class Logger(logging.Logger):
     """用于替换 Python 标准库 Logger 类的日志器。"""
@@ -123,9 +118,6 @@ class Logger(logging.Logger):
 
     def emergency(self, *args, **kwargs):
         self.log(logging.EMERGENCY, *args, **kwargs)
-
-    def nothing(self, *args, **kwargs):
-        self.log(logging.NOTHING, *args, **kwargs)
 
     def setLevel(self, level):
         """设置日志等级，返回实例自身。
@@ -188,6 +180,9 @@ class Logger(logging.Logger):
     # 通过别名的方式实现这个类的命名惯例
     setPropagate = set_propagate
     clearHandlers = clear_handlers
+    add_handler = addHandler
+    remove_handler = removeHandler
+    set_level = setLevel
 
 
 class RootLogger(Logger):
